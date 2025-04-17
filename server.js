@@ -5,19 +5,19 @@ const path = require('path');
 
 const app = express();
 app.use(cors());
-app.use(express.json()); // 🔥 ОБЯЗАТЕЛЬНО
+app.use(express.json()); // обязательно для обработки JSON
 
 app.post('/api/zemexx', (req, res) => {
-  const { settlementName, plotId } = req.body;
-  console.log('📥 Запрос:', { settlementName, plotId });
+  const { settlement, plot } = req.body;
+  console.log('📥 Запрос:', { settlement, plot });
 
-  if (!settlementName || !plotId) {
+  if (!settlement || !plot) {
     return res.status(400).json({ error: 'Не указано название поселка или номер участка' });
   }
 
   const scriptPath = path.join(__dirname, 'zemexx-plot-parser.js');
 
-  exec(`node "${scriptPath}" "${settlementName}" "${plotId}"`, (error, stdout) => {
+  exec(`node "${scriptPath}" "${settlement}" "${plot}"`, (error, stdout) => {
     if (error) {
       console.error('❌ Ошибка скрипта:', error);
       return res.status(500).json({ error: 'Ошибка при выполнении скрипта' });
