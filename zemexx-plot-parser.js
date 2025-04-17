@@ -5,13 +5,13 @@ async function main(settlementName, plotId) {
 
   const browser = await puppeteer.launch({
     headless: true,
-    args: ['--no-sandbox'],
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    executablePath: puppeteer.executablePath() // 🛠️ Это важно для Render
   });
 
   const page = await browser.newPage();
   await page.goto('https://zemexx.ru', { waitUntil: 'domcontentloaded' });
 
-  // Получаем ссылки на поселки
   await page.waitForSelector('a[href*="/zemelnye-uchastki/"]');
   const settlements = await page.$$eval('a[href*="/zemelnye-uchastki/"]', (links) =>
     links.map((link) => ({
@@ -33,16 +33,13 @@ async function main(settlementName, plotId) {
   console.log(`✅ Найден: ${settlement.name}`);
   await page.goto(settlement.url, { waitUntil: 'domcontentloaded' });
 
-  // Получаем ссылку на планировку
   await page.waitForSelector('a.btn_prod--plan');
   const planDataSrc = await page.$eval('a.btn_prod--plan', (el) => el.getAttribute('data-src'));
   const fullPlanUrl = planDataSrc.startsWith('http') ? planDataSrc : `https://zemexx.ru${planDataSrc}`;
   console.log(`🗺️ Переход к планировке: ${fullPlanUrl}`);
 
-  // Загружаем страницу планировки
   await page.goto(fullPlanUrl, { waitUntil: 'domcontentloaded' });
 
-  // Получаем ссылку на SVG
   const svgUrl = await page.$eval('object#plan', (el) => el.getAttribute('data'));
   if (!svgUrl) {
     console.log('❌ SVG не найден');
@@ -53,11 +50,9 @@ async function main(settlementName, plotId) {
   const fullSvgUrl = svgUrl.startsWith('http') ? svgUrl : `https://zemexx.ru${svgUrl}`;
   console.log(`📄 Загружаем SVG: ${fullSvgUrl}`);
 
-  // Загружаем SVG как отдельную страницу
   const svgPage = await browser.newPage();
   await svgPage.goto(fullSvgUrl, { waitUntil: 'domcontentloaded' });
 
-  // Извлекаем участки из SVG
   const plots = await svgPage.evaluate(() => {
     const elements = document.querySelectorAll('[data-id]');
     const result = [];
