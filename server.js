@@ -5,7 +5,7 @@ const path = require('path');
 
 const app = express();
 app.use(cors());
-app.use(express.json()); // обязательно для обработки JSON
+app.use(express.json());
 
 app.post('/api/zemexx', (req, res) => {
   const { settlement, plot } = req.body;
